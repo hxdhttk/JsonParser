@@ -14,10 +14,7 @@ namespace JsonParser
         public static JsonParseResult JsonParser(JsonValue* v, char* json)
         {
             JsonContext c = new JsonContext();
-            if (v == null)
-            {
-                return JsonParseResult.JSON_PARSE_INVALID_VALUE;
-            }
+            UnsafeAssert.Assert(() => v != null, null);
             c.Json = json;
             v->Type = JsonTypes.JSON_NULL;
             JsonParseWhitespace(&c);
@@ -26,6 +23,7 @@ namespace JsonParser
 
         public static JsonTypes GetJsonType(JsonValue* v)
         {
+            UnsafeAssert.Assert(() => v != null, null);
             return v->Type;
         }
 
@@ -39,39 +37,33 @@ namespace JsonParser
 
         public static JsonParseResult JsonParseNull(JsonContext* c, JsonValue* v)
         {
-            if (*(c->Json) == 'n')
-            {
-                if (c->Json[1] != 'u' || c->Json[2] != 'l' || c->Json[3] != 'l')
-                    return JsonParseResult.JSON_PARSE_INVALID_VALUE;
-                c->Json += 3;
-                v->Type = JsonTypes.JSON_NULL;
-            }
+            UnsafeAssert.Assert(() => c->Json[0] == 'n', null, () => c->Json++);
+            if (c->Json[0] != 'u' || c->Json[1] != 'l' || c->Json[2] != 'l')
+                return JsonParseResult.JSON_PARSE_INVALID_VALUE;
+            c->Json += 3;
+            v->Type = JsonTypes.JSON_NULL;
 
             return JsonParseResult.JSON_PARSE_OK;
         }
 
         public static JsonParseResult JsonParseTrue(JsonContext* c, JsonValue* v)
         {
-            if (*(c->Json) == 't')
-            {
-                if (c->Json[1] != 'r' || c->Json[2] != 'u' || c->Json[3] != 'e')
-                    return JsonParseResult.JSON_PARSE_INVALID_VALUE;
-                c->Json += 3;
-                v->Type = JsonTypes.JSON_TRUE;
-            }
+            UnsafeAssert.Assert(() => c->Json[0] == 't', null, () => c->Json++);
+            if (c->Json[0] != 'r' || c->Json[1] != 'u' || c->Json[2] != 'e')
+                return JsonParseResult.JSON_PARSE_INVALID_VALUE;
+            c->Json += 3;
+            v->Type = JsonTypes.JSON_TRUE;
 
             return JsonParseResult.JSON_PARSE_OK;
         }
 
         public static JsonParseResult JsonParseFalse(JsonContext* c, JsonValue* v)
         {
-            if (*(c->Json) == 'f')
-            {
-                if (c->Json[1] != 'a' || c->Json[2] != 'l' || c->Json[3] != 's' || c->Json[4] != 'e')
-                    return JsonParseResult.JSON_PARSE_INVALID_VALUE;
-                c->Json += 4;
-                v->Type = JsonTypes.JSON_FALSE;
-            }
+            UnsafeAssert.Assert(() => c->Json[0] == 'f', null, () => c->Json++);
+            if (c->Json[0] != 'a' || c->Json[1] != 'l' || c->Json[2] != 's' || c->Json[3] != 'e')
+                return JsonParseResult.JSON_PARSE_INVALID_VALUE;
+            c->Json += 4;
+            v->Type = JsonTypes.JSON_FALSE;
 
             return JsonParseResult.JSON_PARSE_OK;
         }
@@ -100,5 +92,32 @@ namespace JsonParser
         JSON_PARSE_EXCEPT_VALUE,
         JSON_PARSE_INVALID_VALUE,
         JSON_PARSE_ROOT_NOT_SINGULAR
+    }
+
+    public static unsafe class UnsafeAssert
+    {
+        private static Action defaultAction = () =>
+        {
+            throw new AssertException();
+        };
+
+        public static void Assert(Func<bool> func, Action action, Action otherOperation = null)
+        {
+            if (!func())
+            {
+                action?.Invoke();
+                defaultAction();
+            }
+
+            otherOperation?.Invoke();
+        }
+    }
+
+    public class AssertException : Exception
+    {
+        public AssertException() : base("Assertion found!")
+        {
+
+        }
     }
 }

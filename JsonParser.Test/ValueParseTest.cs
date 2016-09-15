@@ -65,5 +65,15 @@ namespace JsonParser.Test
             Assert.AreEqual(JsonParseResult.JSON_PARSE_INVALID_VALUE, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR("flase")));
             Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(vPtr));
         }
+
+        [TestMethod]
+        public void TestParseRootNotSingular()
+        {
+            var v = new JsonValue { Type = JsonTypes.UNKNOW };
+            JsonValue* vPtr = &v;
+
+            Assert.AreEqual(JsonParseResult.JSON_PARSE_ROOT_NOT_SINGULAR, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR("null n")));
+            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(vPtr));
+        }
     }
 }
