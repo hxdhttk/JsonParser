@@ -18,7 +18,17 @@ namespace JsonParser
             c.Json = json;
             v->Type = JsonTypes.JSON_NULL;
             JsonParseWhitespace(&c);
-            return JsonParseValue(&c, v);
+            var ret = JsonParseValue(&c, v);
+            if (ret == JsonParseResult.JSON_PARSE_OK)
+            {
+                JsonParseWhitespace(&c);
+                if (*(c.Json) != '\0')
+                {
+                    return JsonParseResult.JSON_PARSE_ROOT_NOT_SINGULAR;
+                }
+            }
+
+            return ret;
         }
 
         public static JsonTypes GetJsonType(JsonValue* v)
@@ -34,37 +44,19 @@ namespace JsonParser
                 p++;
             c->Json = p;
         }
-
-        public static JsonParseResult JsonParseNull(JsonContext* c, JsonValue* v)
+        
+        public static JsonParseResult JsonParseLiteral(JsonContext* c, JsonValue* v, char* typeString, JsonTypes type)
         {
-            UnsafeAssert.Assert(() => c->Json[0] == 'n', null, () => c->Json++);
-            if (c->Json[0] != 'u' || c->Json[1] != 'l' || c->Json[2] != 'l')
-                return JsonParseResult.JSON_PARSE_INVALID_VALUE;
-            c->Json += 3;
-            v->Type = JsonTypes.JSON_NULL;
-
-            return JsonParseResult.JSON_PARSE_OK;
-        }
-
-        public static JsonParseResult JsonParseTrue(JsonContext* c, JsonValue* v)
-        {
-            UnsafeAssert.Assert(() => c->Json[0] == 't', null, () => c->Json++);
-            if (c->Json[0] != 'r' || c->Json[1] != 'u' || c->Json[2] != 'e')
-                return JsonParseResult.JSON_PARSE_INVALID_VALUE;
-            c->Json += 3;
-            v->Type = JsonTypes.JSON_TRUE;
-
-            return JsonParseResult.JSON_PARSE_OK;
-        }
-
-        public static JsonParseResult JsonParseFalse(JsonContext* c, JsonValue* v)
-        {
-            UnsafeAssert.Assert(() => c->Json[0] == 'f', null, () => c->Json++);
-            if (c->Json[0] != 'a' || c->Json[1] != 'l' || c->Json[2] != 's' || c->Json[3] != 'e')
-                return JsonParseResult.JSON_PARSE_INVALID_VALUE;
-            c->Json += 4;
-            v->Type = JsonTypes.JSON_FALSE;
-
+            while (*typeString != '\0')
+            {
+                if (*(c->Json) != *typeString)
+                {
+                    return JsonParseResult.JSON_PARSE_INVALID_VALUE;
+                }
+                c->Json++;
+                typeString++;
+            }
+            v->Type = type;
             return JsonParseResult.JSON_PARSE_OK;
         }
 
@@ -73,11 +65,11 @@ namespace JsonParser
             switch (*(c->Json))
             {
                 case 'n':
-                    return JsonParseNull(c, v);
+                    return JsonParseLiteral(c, v, (char*)Marshal.StringToBSTR("null"), JsonTypes.JSON_NULL);
                 case 't':
-                    return JsonParseTrue(c, v);
+                    return JsonParseLiteral(c, v, (char*)Marshal.StringToBSTR("true"), JsonTypes.JSON_TRUE);
                 case 'f':
-                    return JsonParseFalse(c, v);
+                    return JsonParseLiteral(c, v, (char*)Marshal.StringToBSTR("false"), JsonTypes.JSON_FALSE);
                 case '\0':
                     return JsonParseResult.JSON_PARSE_EXCEPT_VALUE;
                 default:
