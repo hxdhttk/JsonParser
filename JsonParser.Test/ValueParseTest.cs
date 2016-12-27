@@ -1,79 +1,78 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using JsonParser;
-using JsonParser.Types;
 
 namespace JsonParser.Test
 {
     [TestClass]
-    public unsafe class ValueParseTest
+    public class ValueParseTest
     {
         [TestMethod]
         public void TestParseNull()
         {
-            var v = new JsonValue {Type = JsonTypes.UNKNOW};
-            JsonValue* vPtr = &v;
-            
-            Assert.AreEqual(JsonParseResult.JSON_PARSE_OK, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR("null")));
-            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(vPtr));
+            var v = new JsonValue { Type = JsonTypes.JSON_NULL };
+            var json = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes("null")));
+
+            Assert.AreEqual(Parser.ResultType.JSON_PARSE_OK, Parser.JsonParse(ref v, json).ResultType);
+            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(ref v));
         }
 
         [TestMethod]
         public void TestParseTrue()
         {
-            var v = new JsonValue { Type = JsonTypes.UNKNOW };
-            JsonValue* vPtr = &v;
+            var v = new JsonValue { Type = JsonTypes.JSON_NULL };
+            var json = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes("true")));
 
-            Assert.AreEqual(JsonParseResult.JSON_PARSE_OK, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR("true")));
-            Assert.AreEqual(JsonTypes.JSON_TRUE, Parser.GetJsonType(vPtr));
+            Assert.AreEqual(Parser.ResultType.JSON_PARSE_OK, Parser.JsonParse(ref v, json).ResultType);
+            Assert.AreEqual(JsonTypes.JSON_TRUE, Parser.GetJsonType(ref v));
         }
 
         [TestMethod]
         public void TestParseFalse()
         {
-            var v = new JsonValue { Type = JsonTypes.UNKNOW };
-            JsonValue* vPtr = &v;
+            var v = new JsonValue { Type = JsonTypes.JSON_NULL };
+            var json = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes("false")));
 
-            Assert.AreEqual(JsonParseResult.JSON_PARSE_OK, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR("false")));
-            Assert.AreEqual(JsonTypes.JSON_FALSE, Parser.GetJsonType(vPtr));
+            Assert.AreEqual(Parser.ResultType.JSON_PARSE_OK, Parser.JsonParse(ref v, json).ResultType);
+            Assert.AreEqual(JsonTypes.JSON_FALSE, Parser.GetJsonType(ref v));
         }
 
         [TestMethod]
         public void TestParseWhitespace()
         {
-            var v = new JsonValue { Type = JsonTypes.UNKNOW };
-            JsonValue* vPtr = &v;
+            var v = new JsonValue { Type = JsonTypes.JSON_NULL };
+            var json = new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes(" \n\r\t")));
 
-            Assert.AreEqual(JsonParseResult.JSON_PARSE_EXCEPT_VALUE, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR(" \n\r\t")));
-            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(vPtr));
+            Assert.AreEqual(Parser.ResultType.JSON_PARSE_EXCEPT_VALUE, Parser.JsonParse(ref v, json).ResultType);
+            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(ref v));
         }
 
         [TestMethod]
         public void TestParseSomeInvalidValues()
         {
-            var v = new JsonValue { Type = JsonTypes.UNKNOW };
-            JsonValue* vPtr = &v;
+            var v = new JsonValue { Type = JsonTypes.JSON_NULL };
+            
+            Assert.AreEqual(Parser.ResultType.JSON_PARSE_INVALID_VALUE, Parser.JsonParse(ref v, new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes("none")))).ResultType);
+            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(ref v));
 
-            Assert.AreEqual(JsonParseResult.JSON_PARSE_INVALID_VALUE, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR("none")));
-            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(vPtr));
+            Assert.AreEqual(Parser.ResultType.JSON_PARSE_INVALID_VALUE, Parser.JsonParse(ref v, new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes("ture")))).ResultType);
+            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(ref v));
 
-            Assert.AreEqual(JsonParseResult.JSON_PARSE_INVALID_VALUE, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR("ture")));
-            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(vPtr));
-
-            Assert.AreEqual(JsonParseResult.JSON_PARSE_INVALID_VALUE, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR("flase")));
-            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(vPtr));
+            Assert.AreEqual(Parser.ResultType.JSON_PARSE_INVALID_VALUE, Parser.JsonParse(ref v, new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes("flase")))).ResultType);
+            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(ref v));
         }
 
         [TestMethod]
         public void TestParseRootNotSingular()
         {
-            var v = new JsonValue { Type = JsonTypes.UNKNOW };
-            JsonValue* vPtr = &v;
-
-            Assert.AreEqual(JsonParseResult.JSON_PARSE_ROOT_NOT_SINGULAR, Parser.JsonParser(vPtr, (char*)Marshal.StringToBSTR("null n")));
-            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(vPtr));
+            var v = new JsonValue { Type = JsonTypes.JSON_NULL };
+            
+            Assert.AreEqual(Parser.ResultType.JSON_PARSE_ROOT_NOT_SINGULAR, Parser.JsonParse(ref v, new StreamReader(new MemoryStream(Encoding.UTF8.GetBytes("null n")))).ResultType);
+            Assert.AreEqual(JsonTypes.JSON_NULL, Parser.GetJsonType(ref v));
         }
     }
 }

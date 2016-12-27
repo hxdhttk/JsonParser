@@ -46,9 +46,6 @@
   <ItemGroup>
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Types\JsonContext.cs" />
-    <Compile Include="Types\JsonTypes.cs" />
-    <Compile Include="Types\JsonValue.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
